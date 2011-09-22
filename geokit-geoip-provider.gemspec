@@ -10,4 +10,6 @@ Gem::Specification.new do |s|
     s.require_path  = "lib"
     s.has_rdoc  =   false
     s.extra_rdoc_files  = ["README"]
+    s.add_dependency('geokit', '~> 1.5.0')
+    s.add_dependency('geoip',  '~> 1.1.1')
 end
