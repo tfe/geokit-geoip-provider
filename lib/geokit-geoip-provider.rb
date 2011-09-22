@@ -4,7 +4,7 @@ require 'geoip'
 module Geokit
   module Geocoders
 
-    # Should be overriden as Geokit::Geocoders::external_key in your configuration file
+    # Should be overriden as Geokit::Geocoders::geo_ip_database in your configuration file
     @@geo_ip_database = 'REPLACE_WITH_GEOCITY_LOCATION'
     __define_accessors
 
@@ -15,17 +15,23 @@ module Geokit
       end
       
       def self.do_geocode(address, options = {})
-        ip, ip2, country_code, country_code2, country, continent, region, city, postal, latitude, longitude, usa = db.city(address)
+        city = db.city(address)
+        return GeoLoc.new if not city
         
-        res = GeoLoc.new
-        res.city = city
-        res.state = region
-        res.country_code = country_code
-        res.zip = postal
-        res.lat = latitude
-        res.lng = longitude
-        res.success = !!(res.lat && res.lng)
-        res
+        GeoLoc.new.tap do |gl|
+          gl.provider     = 'geoip'
+          gl.city         = city.city_name
+          gl.state        = city.region_name
+          gl.zip          = city.postal_code
+          gl.country_code = city.country_code2
+          gl.lng          = city.longitude.to_f
+          gl.lat          = city.latitude.to_f
+          gl.success      = !!gl.city && !gl.city.empty?
+        end
+        
+      rescue
+        logger.error "Caught an error during GeoIp geocoding call: "+$!
+        return GeoLoc.new
       end
     end
 
